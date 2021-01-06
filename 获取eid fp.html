@@ -1,0 +1,25 @@
+<html>
+    <head></head>
+    <body>
+        <div id="info">等着……</div>
+        <hr>
+        <div id="eid"></div>
+        <div id="fp"></div>
+    </body>
+</html>
+
+<script src="https://gias.jd.com/js/td.js"></script>
+
+<script>
+    setTimeout(function () {
+        try {
+            getJdEid(function (eid, fp, udfp) {
+                document.getElementById('info').innerText = '如无法获取，自行打开京东登录后，刷新本页面';
+                document.getElementById('eid').innerText = 'eid = ' + eid;
+                document.getElementById('fp').innerText = 'fp = ' + fp;
+            });
+        } catch (e) {
+            document.getElementById('info').innerText = e;
+        }
+    }, 1000);
+</script>
