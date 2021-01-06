@@ -695,18 +695,16 @@ class JdSeckill(object):
             return False
 
         logger.info('提交抢购订单...')
-        headers = {
-            'User-Agent': self.user_agent,
-            'Host': 'marathon.jd.com',
-            'Referer': 'https://marathon.jd.com/seckill/seckill.action?skuId={0}&num={1}&rid={2}'.format(
-                self.sku_id, self.seckill_num, int(time.time())),
-        }
+        # 修改设置请求头的方式
+        self.session.headers['User-Agent'] = self.user_agent
+        self.session.headers['Host'] = 'marathon.jd.com'
+        self.session.headers['Referer'] = 'https://marathon.jd.com/seckill/seckill.action?skuId={0}&num={1}&rid={2}'.format(
+                self.sku_id, self.seckill_num, int(time.time()))
         resp = self.session.post(
             url=url,
             params=payload,
             data=self.seckill_order_data.get(
-                self.sku_id),
-            headers=headers)
+                self.sku_id))
         resp_json = None
         try:
             resp_json = parse_json(resp.text)
