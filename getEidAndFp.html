@@ -1,7 +1,10 @@
 <html>
     <head></head>
     <body>
-        <div id="info">等着……</div>
+        <div id="tishi">如无法获取，自行打开京东登录后，刷新本页面，如异常情况出现，可以根据本文章获取：
+            <a href="https://chenhx.blog.csdn.net/article/details/112069082" target="_blank">https://chenhx.blog.csdn.net/article/details/112069082</a></div>
+        <hr>
+        <div id="info">稍等片刻……
         <hr>
         <div id="eid"></div>
         <div id="fp"></div>
@@ -14,7 +17,7 @@
     setTimeout(function () {
         try {
             getJdEid(function (eid, fp, udfp) {
-                document.getElementById('info').innerText = '如无法获取，自行打开京东登录后，刷新本页面';
+                document.getElementById('info').innerText = '获取成功，请自行拷贝';
                 document.getElementById('eid').innerText = 'eid = ' + eid;
                 document.getElementById('fp').innerText = 'fp = ' + fp;
             });
