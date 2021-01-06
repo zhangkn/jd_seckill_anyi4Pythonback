@@ -1,3 +1,6 @@
+# 遇到任何Python问题请看专栏：    
+[https://blog.csdn.net/qq_26525215/category_6041221.html](https://blog.csdn.net/qq_26525215/category_6041221.html)
+
 # Jd_Seckill
 
 ## 特别声明:
