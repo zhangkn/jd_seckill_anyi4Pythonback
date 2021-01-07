@@ -31,10 +31,12 @@ from .util import (
 
 from datetime import datetime, timedelta
 
+
 class SpiderSession:
     """
     Session相关操作
     """
+
     def __init__(self):
         self.cookies_dir_path = "cookies/"
         self.user_agent = global_config.getRaw('config', 'default_user_agent')
@@ -110,6 +112,7 @@ class QrLogin:
     """
     扫码登录
     """
+
     def __init__(self, spider_session: SpiderSession):
         """
         初始化扫码登录
@@ -286,16 +289,23 @@ class JdTdudfp:
         self.is_init = True
 
         loop = asyncio.get_event_loop()
-        get_future = asyncio.ensure_future(self._get())
+        get_future = asyncio.ensure_future(self._get_auto_eid_fp())
         loop.run_until_complete(get_future)
         self.jd_tdudfp = get_future.result()
 
     def get(self, key):
         return self.jd_tdudfp.get(key) if self.jd_tdudfp else None
 
-    async def _get(self):
+    async def _get_auto_eid_fp(self):
+
         jd_tdudfp = None
         try:
+            # 是否开启自动获取eid和fp,默认为true，开启。设置为false，请自行配置eid和fp
+            open_auto_get_eid_fp = global_config.getRaw('config', 'open_auto_get_eid_fp')
+            if open_auto_get_eid_fp == 'false':
+                # 如果配置false，直接返回false
+                return jd_tdudfp
+
             from pyppeteer import launch
             url = "https://www.jd.com/"
             browser = await launch(userDataDir=".user_data", autoClose=True,
@@ -325,7 +335,8 @@ class JdTdudfp:
             await page.goto(a_href)
             await page.waitFor(".goods_item_link")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            a_href = await page.querySelectorAllEval(".goods_item_link", "(elements) => elements[{}].href".format(str(random.randint(1,20))))
+            a_href = await page.querySelectorAllEval(".goods_item_link", "(elements) => elements[{}].href".format(
+                str(random.randint(1, 20))))
             await page.goto(a_href)
             await page.waitFor("#InitCartUrl")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
@@ -337,11 +348,12 @@ class JdTdudfp:
             await page.goto(a_href)
             await page.waitFor(".common-submit-btn")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            
+
             await page.click(".common-submit-btn")
             await page.waitFor("#sumPayPriceId")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
 
+            # 30秒
             for _ in range(30):
                 jd_tdudfp = await page.evaluate("() => {try{return _JdTdudfp}catch(e){}}")
                 if jd_tdudfp and len(jd_tdudfp) > 0:
@@ -399,6 +411,7 @@ class JdSeckill(object):
         """
         用户登陆态校验装饰器。若用户未登陆，则调用扫码登陆
         """
+
         @functools.wraps(func)
         def new_func(self, *args, **kwargs):
             if not self.qrlogin.is_login:
@@ -407,6 +420,7 @@ class JdSeckill(object):
             if not self.jd_tdufp.is_init:
                 self.jd_tdufp.init_jd_tdudfp()
             return func(self, *args, **kwargs)
+
         return new_func
 
     @check_login_and_jdtdufp
@@ -424,11 +438,13 @@ class JdSeckill(object):
         self._seckill()
 
     @check_login_and_jdtdufp
-    def seckill_by_proc_pool(self, work_count=5):
+    def seckill_by_proc_pool(self):
         """
         多进程进行抢购
         work_count：进程数量
         """
+        # 增加进程配置
+        work_count = int(global_config.getRaw('config', 'work_count'))
         with ProcessPoolExecutor(work_count) as pool:
             for i in range(work_count):
                 pool.submit(self.seckill)
@@ -466,7 +482,7 @@ class JdSeckill(object):
             来判断抢购的任务是否可以继续运行
         """
         buy_time = self.timers.buytime_get()
-        continue_time = int(global_config.getRaw('config','continue_time'))
+        continue_time = int(global_config.getRaw('config', 'continue_time'))
         stop_time = datetime.strptime(
             (buy_time + timedelta(minutes=continue_time)).strftime("%Y-%m-%d %H:%M:%S.%f"),
             "%Y-%m-%d %H:%M:%S.%f"
@@ -492,7 +508,7 @@ class JdSeckill(object):
         resp = self.session.get(url=url, params=payload, headers=headers)
         resp_json = parse_json(resp.text)
         reserve_url = resp_json.get('url')
-        
+
         while True:
             try:
                 self.session.get(url='https:' + reserve_url)
@@ -642,6 +658,17 @@ class JdSeckill(object):
         default_address = init_info['addressList'][0]  # 默认地址dict
         invoice_info = init_info.get('invoiceInfo', {})  # 默认发票信息dict, 有可能不返回
         token = init_info['token']
+
+        eid = None
+        fp = None
+        open_auto_get_eid_fp = global_config.getRaw('config', 'open_auto_get_eid_fp')
+        if open_auto_get_eid_fp == 'true':
+            eid = self.jd_tdufp.get("eid") if self.jd_tdufp.get("eid") else global_config.getRaw('config', 'eid')
+            fp = self.jd_tdufp.get("fp") if self.jd_tdufp.get("fp") else global_config.getRaw('config', 'fp')
+        else:
+            # 直接取配置的
+            eid = global_config.getRaw('config', 'eid')
+            fp = global_config.getRaw('config', 'fp')
         data = {
             'skuId': self.sku_id,
             'num': self.seckill_num,
@@ -672,8 +699,8 @@ class JdSeckill(object):
             'areaCode': '',
             'overseas': 0,
             'phone': '',
-            'eid': self.jd_tdufp.get("eid") if self.jd_tdufp.get("eid") else global_config.getRaw('config', 'eid'),
-            'fp': self.jd_tdufp.get("fp") if self.jd_tdufp.get("fp") else global_config.getRaw('config', 'fp'),
+            'eid': eid,
+            'fp': fp,
             'token': token,
             'pru': ''
         }
@@ -698,39 +725,42 @@ class JdSeckill(object):
         # 修改设置请求头的方式
         self.session.headers['User-Agent'] = self.user_agent
         self.session.headers['Host'] = 'marathon.jd.com'
-        self.session.headers['Referer'] = 'https://marathon.jd.com/seckill/seckill.action?skuId={0}&num={1}&rid={2}'.format(
-                self.sku_id, self.seckill_num, int(time.time()))
+        self.session.headers[
+            'Referer'] = 'https://marathon.jd.com/seckill/seckill.action?skuId={0}&num={1}&rid={2}'.format(
+            self.sku_id, self.seckill_num, int(time.time()))
+        # 防止重定向，增加allow_redirects=False，20210107
         resp = self.session.post(
             url=url,
             params=payload,
             data=self.seckill_order_data.get(
-                self.sku_id))
-        resp_json = None
+                self.sku_id),
+            allow_redirects=False)
         try:
+            # 解析json
             resp_json = parse_json(resp.text)
+            # 返回信息
+            # 抢购失败：
+            # {'errorMessage': '很遗憾没有抢到，再接再厉哦。', 'orderId': 0, 'resultCode': 60074, 'skuId': 0, 'success': False}
+            # {'errorMessage': '抱歉，您提交过快，请稍后再提交订单！', 'orderId': 0, 'resultCode': 60017, 'skuId': 0, 'success': False}
+            # {'errorMessage': '系统正在开小差，请重试~~', 'orderId': 0, 'resultCode': 90013, 'skuId': 0, 'success': False}
+            # 抢购成功：
+            # {"appUrl":"xxxxx","orderId":820227xxxxx,"pcUrl":"xxxxx","resultCode":0,"skuId":0,"success":true,"totalMoney":"xxxxx"}
+            if resp_json.get('success'):
+                order_id = resp_json.get('orderId')
+                total_money = resp_json.get('totalMoney')
+                pay_url = 'https:' + resp_json.get('pcUrl')
+                logger.info('抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}'.format(order_id, total_money, pay_url))
+                if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
+                    success_message = "抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}".format(order_id, total_money, pay_url)
+                    send_wechat(success_message)
+                    self.running_flag = False
+                return True
+            else:
+                logger.info('抢购失败，返回信息:{}'.format(resp_json))
+                if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
+                    error_message = '抢购失败，返回信息:{}'.format(resp_json)
+                    send_wechat(error_message)
+                return False
         except Exception as e:
             logger.info('抢购失败，返回信息:{}'.format(resp.text[0: 128]))
-            return False
-        # 返回信息
-        # 抢购失败：
-        # {'errorMessage': '很遗憾没有抢到，再接再厉哦。', 'orderId': 0, 'resultCode': 60074, 'skuId': 0, 'success': False}
-        # {'errorMessage': '抱歉，您提交过快，请稍后再提交订单！', 'orderId': 0, 'resultCode': 60017, 'skuId': 0, 'success': False}
-        # {'errorMessage': '系统正在开小差，请重试~~', 'orderId': 0, 'resultCode': 90013, 'skuId': 0, 'success': False}
-        # 抢购成功：
-        # {"appUrl":"xxxxx","orderId":820227xxxxx,"pcUrl":"xxxxx","resultCode":0,"skuId":0,"success":true,"totalMoney":"xxxxx"}
-        if resp_json.get('success'):
-            order_id = resp_json.get('orderId')
-            total_money = resp_json.get('totalMoney')
-            pay_url = 'https:' + resp_json.get('pcUrl')
-            logger.info('抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}'.format(order_id, total_money, pay_url))
-            if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
-                success_message = "抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}".format(order_id, total_money, pay_url)
-                send_wechat(success_message)
-                self.running_flag = False
-            return True
-        else:
-            logger.info('抢购失败，返回信息:{}'.format(resp_json))
-            if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
-                error_message = '抢购失败，返回信息:{}'.format(resp_json)
-                send_wechat(error_message)
             return False
