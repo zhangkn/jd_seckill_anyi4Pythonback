@@ -2,9 +2,15 @@
 [https://blog.csdn.net/qq_26525215/category_6041221.html](https://blog.csdn.net/qq_26525215/category_6041221.html)
 
 
-扫公众号关注不迷路：    
+扫公众号关注不迷路（维护不易，还请关注支持一下）：    
 ![https://img-blog.csdnimg.cn/20201019162545488.jpg](https://img-blog.csdnimg.cn/20201019162545488.jpg)
 回复：pythonjd
+
+# 更新日志  
+
+
+## 20210113  
+- buy_time可以不用再每天手动去进行设置修改，使用当天的日期  
 
 
 # Jd_Seckill
