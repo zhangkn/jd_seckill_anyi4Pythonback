@@ -1,5 +1,5 @@
 
-
+抢茅台 备份
 
 # 更新日志  
 
@@ -225,9 +225,6 @@ $ sudo docker logs jd-seckill -f
 ```bash
 $ sudo docker ps -a
 ```
-
-## 打赏
-不用再打赏了，抢到茅台的同学请保持这份喜悦，没抢到的继续加油 :)  
 
 ## 感谢
 ##### 非常感谢原作者 https://github.com/zhou-xiaojun/jd_mask 提供的代码
