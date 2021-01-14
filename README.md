@@ -1,10 +1,5 @@
-# 遇到任何Python问题请看专栏：    
-[https://blog.csdn.net/qq_26525215/category_6041221.html](https://blog.csdn.net/qq_26525215/category_6041221.html)
 
 
-扫公众号关注不迷路（维护不易，还请关注支持一下）：    
-![https://img-blog.csdnimg.cn/20201019162545488.jpg](https://img-blog.csdnimg.cn/20201019162545488.jpg)
-回复：pythonjd
 
 # 更新日志  
 
