@@ -3,7 +3,7 @@ chardet==3.0.4
 idna==2.9
 lxml~=4.5.1
 requests~=2.23.0
-urllib3==1.25.9
+urllib3==1.26.5
 Pillow~=8.0.1
 pyppeteer2~=0.2.2
 pyppeteer==0.2.4
